@@ -4,6 +4,7 @@ type RouteMeta = {
   title?: string;
   navLabel?: string;
   visibleInNav?: boolean;
+  // Reserved for future authentication/authorization logic
   protected?: boolean;
 };
 

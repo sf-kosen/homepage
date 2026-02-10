@@ -7,9 +7,11 @@ import VotePresenter from "../Pages/VotePresenter";
 
 const isVotePageEnabled = import.meta.env.VITE_LT1_VOTE_ENABLED === "true";
 
+const DEFAULT_ROUTE = "/events/lt-1";
+
 const routes: Array<HasChildrenRoute> = [
   { 
-    path: "/", element: <Navigate to="/events/lt-1" replace />, 
+    path: "/", element: <Navigate to={DEFAULT_ROUTE} replace />, 
     meta: { visibleInNav: false } 
   },
   { 
@@ -17,7 +19,7 @@ const routes: Array<HasChildrenRoute> = [
     meta: { title: "Join", navLabel: "Join", visibleInNav: true } 
   },
   {
-    path: "events", element: <Navigate to="/events/lt-1" replace />,
+    path: "events", element: <Navigate to={DEFAULT_ROUTE} replace />,
     meta: { visibleInNav: false },
     children: [
       {
@@ -30,7 +32,7 @@ const routes: Array<HasChildrenRoute> = [
           },
           {
             path: "vote/presenter",
-            element: isVotePageEnabled ? <VotePresenter /> : <Navigate to="/events/lt-1" replace />,
+            element: isVotePageEnabled ? <VotePresenter /> : <Navigate to={DEFAULT_ROUTE} replace />,
             meta: { title: "Vote Presenter", visibleInNav: false }
           }
         ]
@@ -54,3 +56,6 @@ function flattenRoutes(route: HasChildrenRoute, parent = ""): Array<BaseRoute> {
 }
 
 export const flatRoutes: Array<BaseRoute> = routes.flatMap((route) => flattenRoutes(route, ""));
+
+// Create a Map for O(1) route lookup by path
+export const routesByPath = new Map(flatRoutes.map(route => [route.path, route]));
