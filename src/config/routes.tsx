@@ -42,6 +42,7 @@ const routes: Array<HasChildrenRoute> = [
 ];
 
 function joinPaths(parent: string, child: string) {
+  if (child === "") return parent || "/";
   if (child === "/") return "/";
   if (child.startsWith("/")) return child;
   const p = parent === "" || parent === "/" ? "" : parent;
