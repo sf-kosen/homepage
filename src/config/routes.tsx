@@ -58,4 +58,7 @@ function flattenRoutes(route: HasChildrenRoute, parent = ""): Array<BaseRoute> {
 export const flatRoutes: Array<BaseRoute> = routes.flatMap((route) => flattenRoutes(route, ""));
 
 // Create a Map for O(1) route lookup by path
-export const routesByPath = new Map(flatRoutes.map(route => [route.path, route]));
+export const routesByPath = new Map<string, BaseRoute>();
+for (const route of flatRoutes) {
+  routesByPath.set(route.path, route);
+}
