@@ -7,6 +7,7 @@ import { lt1Presenters } from "../../shared/lt1Presenters.js";
 import { VoteStoreUnavailableError, releaseVoteSlot, reserveVoteSlot } from "../_lib/voteStore.js";
 import { enforceFeatureEnabled } from "../_lib/featureFlag.js";
 import { getTrustedIp } from "../_lib/trustedIp.js";
+import { sanitizeDiscordText, validateDiscordWebhookUrl } from "../_lib/discord.js";
 
 type VotePayload = {
     presenterId: string;
@@ -15,13 +16,6 @@ type VotePayload = {
 
 const EVENT_ID = "lt1";
 const VOTE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
-const sanitizeLog = (value: string) =>
-    Array.from(value)
-        .filter((char) => {
-            const code = char.charCodeAt(0);
-            return code >= 0x20 && code !== 0x7f;
-        })
-        .join("");
 const presentersById = new Map(lt1Presenters.map((presenter) => [presenter.id, presenter]));
 
 function isSecureVoteCookie() {
@@ -39,15 +33,6 @@ function getVoteCookieName() {
 function hasVotedCookie(rawCookieHeader?: string) {
     const cookies = parseCookies(rawCookieHeader);
     return Boolean(cookies["lt1_voted"] || cookies["__Host-lt1_voted"]);
-}
-
-function validateWebhookUrl(raw: string) {
-    const parsed = new URL(raw);
-    const allowedHosts = new Set(["discord.com", "canary.discord.com", "ptb.discord.com"]);
-    if (parsed.protocol !== "https:" || !allowedHosts.has(parsed.hostname)) {
-        throw new Error("Invalid webhook host/protocol");
-    }
-    return parsed;
 }
 
 export default async function handler(
@@ -148,7 +133,7 @@ export default async function handler(
     }
     let parsedWebhookUrl: URL;
     try {
-        parsedWebhookUrl = validateWebhookUrl(webhookUrl);
+        parsedWebhookUrl = validateDiscordWebhookUrl(webhookUrl);
     } catch {
         await releaseVoteSlot(EVENT_ID, session.sub);
         return sendJson(res, 500, { error: "Invalid webhook configuration." });
@@ -157,9 +142,9 @@ export default async function handler(
     const displayName = session.globalName
         ? `${session.globalName} (${session.username})`
         : session.username;
-    const safeDisplayName = sanitizeLog(displayName);
-    const safePresenter = sanitizeLog(presenter.name);
-    const safePresenterId = sanitizeLog(presenter.id);
+    const safeDisplayName = sanitizeDiscordText(displayName);
+    const safePresenter = sanitizeDiscordText(presenter.name);
+    const safePresenterId = sanitizeDiscordText(presenter.id);
 
     const embed = {
         title: "LT Vote",

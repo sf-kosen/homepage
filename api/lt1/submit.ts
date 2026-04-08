@@ -5,28 +5,12 @@ import { checkRateLimit } from "../_lib/rateLimit.js";
 import { enforceCsrf, enforceJson } from "../_lib/requestGuard.js";
 import { enforceFeatureEnabled } from "../_lib/featureFlag.js";
 import { getTrustedIp } from "../_lib/trustedIp.js";
+import { sanitizeDiscordText, sanitizeLog, validateDiscordWebhookUrl } from "../_lib/discord.js";
 
 type SubmitPayload = {
   title?: string;
   description?: string;
 };
-
-const sanitizeLog = (value: string) =>
-  Array.from(value)
-    .filter((char) => {
-      const code = char.charCodeAt(0);
-      return code >= 0x20 && code !== 0x7f;
-    })
-    .join("");
-
-function validateWebhookUrl(raw: string) {
-  const parsed = new URL(raw);
-  const allowedHosts = new Set(["discord.com", "canary.discord.com", "ptb.discord.com"]);
-  if (parsed.protocol !== "https:" || !allowedHosts.has(parsed.hostname)) {
-    throw new Error("Invalid webhook host/protocol");
-  }
-  return parsed;
-}
 
 export default async function handler(
   req: { method?: string; headers?: Record<string, string | undefined> } & AsyncIterable<Uint8Array>,
@@ -118,7 +102,7 @@ export default async function handler(
 
   let parsedWebhookUrl: URL;
   try {
-    parsedWebhookUrl = validateWebhookUrl(webhookUrl);
+    parsedWebhookUrl = validateDiscordWebhookUrl(webhookUrl);
   } catch {
     return sendJson(res, 500, { error: "Invalid webhook configuration." });
   }
@@ -126,15 +110,15 @@ export default async function handler(
   const displayName = session.globalName
     ? `${session.globalName} (${session.username})`
     : session.username;
-  const safeDisplayName = sanitizeLog(displayName);
+  const safeDisplayName = sanitizeDiscordText(displayName);
   const safeTitle = sanitizeLog(title);
 
   const embed = {
     title: "LT Submission",
     color: 0x111827,
     fields: [
-      { name: "Title", value: title },
-      { name: "Description", value: description || "N/A" },
+      { name: "Title", value: sanitizeDiscordText(title) },
+      { name: "Description", value: sanitizeDiscordText(description || "N/A") },
       { name: "Submitted by", value: `${safeDisplayName}\nID: ${session.sub}` },
     ],
     timestamp: new Date().toISOString(),
