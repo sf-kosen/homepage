@@ -5,22 +5,27 @@ import Join from "./Pages/Join";
 import LT1 from "./Pages/LT1";
 import LT1Register from "./Pages/LT1Register";
 import VotePresenter from "./Pages/VotePresenter";
+import LT2 from "./Pages/LT2";
+import LT2Register from "./Pages/LT2Register";
+import LT2VotePresenter from "./Pages/LT2VotePresenter";
+import { lt2Event } from "./content/lt2Event";
 
 const isVotePageEnabled = import.meta.env.VITE_LT1_VOTE_ENABLED === "true";
+const isLt2VotePageEnabled = import.meta.env.VITE_LT2_VOTE_ENABLED === "true";
 
 
 
 const routes: Array<HasChildrenRoute> = [
-  { 
-    path: "/", element: <Navigate to="/events/lt-1" replace />, 
-    meta: { visibleInNav: false } 
+  {
+    path: "/", element: <Navigate to="/events/lt2" replace />,
+    meta: { visibleInNav: false }
   },
   { 
     path: "/join", element: <Join />, 
     meta: { title: "Join", navLabel: "Join", visibleInNav: true } 
   },
   {
-    path: "events", element: <Navigate to="/events/lt-1" replace />,
+    path: "events", element: <Navigate to="/events/lt2" replace />,
     meta: { visibleInNav: false },
     children: [
       {
@@ -37,6 +42,36 @@ const routes: Array<HasChildrenRoute> = [
             meta: { title: "Vote Presenter", visibleInNav: false }
           }
         ]
+      },
+      {
+        path: "lt2", element: <LT2 />,
+        meta: { title: lt2Event.name, navLabel: "LT2", visibleInNav: true },
+        children: [
+          {
+            path: "register", element: <LT2Register />,
+            meta: { title: `${lt2Event.name} 登壇登録`, visibleInNav: false }
+          },
+          {
+            path: "vote/presenter",
+            element: isLt2VotePageEnabled ? <LT2VotePresenter /> : <Navigate to="/events/lt2" replace />,
+            meta: { title: `${lt2Event.name} 投票`, visibleInNav: false }
+          }
+        ]
+      },
+      {
+        path: "lt-2",
+        element: <Navigate to="/events/lt2" replace />,
+        meta: { visibleInNav: false }
+      },
+      {
+        path: "lt-2/register",
+        element: <Navigate to="/events/lt2/register" replace />,
+        meta: { visibleInNav: false }
+      },
+      {
+        path: "lt-2/vote/presenter",
+        element: <Navigate to="/events/lt2/vote/presenter" replace />,
+        meta: { visibleInNav: false }
       }
     ]
   },
